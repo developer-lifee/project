@@ -15,7 +15,6 @@ const NumberSelector: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [takenNumbers, setTakenNumbers] = useState<string[]>([]);
-  const [orderId, setOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTakenNumbers = async () => {
@@ -63,8 +62,12 @@ const NumberSelector: React.FC = () => {
   const handleRegistrationSubmit = async (customerData: CustomerData) => {
     setIsProcessingPayment(true);
     try {
-      // Primero, intentamos obtener el token de pago
-      const tokenResponse = await fetch('https://rifa.sheerit.com.co/generar_token.php', {
+      await saveCustomerData(customerData);
+      console.log("Datos del cliente guardados exitosamente");
+      setIsModalOpen(false);
+      sessionStorage.setItem('customerData', JSON.stringify(customerData));
+
+      const paymentUrlResponse = await fetch('https://rifa.sheerit.com.co/generar_token.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,29 +75,24 @@ const NumberSelector: React.FC = () => {
         body: JSON.stringify({
           amount: PAYMENT_CONFIG.PACKAGE_PRICE,
           description: PAYMENT_CONFIG.DESCRIPTION,
-          tax: "vat-19", // Si es necesario
-        }),
+          tax: "vat-19"
+        })
       });
 
-      if (!tokenResponse.ok) {
-        const errorData = await tokenResponse.json();
-        throw new Error(errorData.error || 'Error al obtener el token de pago');
+      if (!paymentUrlResponse.ok) {
+        throw new Error('Error al obtener la URL de pago');
       }
 
-      const tokenData = await tokenResponse.json();
-      console.log("Respuesta de generar_token.php:", tokenData);
+      const paymentUrlData = await paymentUrlResponse.json();
+      console.log("Respuesta de generar_token.php:", paymentUrlData);
 
-      // Guardar los datos del cliente en sessionStorage
-      sessionStorage.setItem('customerData', JSON.stringify(customerData));
-      sessionStorage.setItem('orderId', tokenData.orderId); // Asegúrate de que generar_token.php devuelva esto
-      setOrderId(tokenData.orderId);
+      window.location.href = paymentUrlData.redirectionUrl;
 
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : 'Error al procesar la solicitud');
     } finally {
       setIsProcessingPayment(false);
-      setIsModalOpen(false);
     }
   };
 
@@ -208,16 +206,6 @@ const NumberSelector: React.FC = () => {
           isSubmitting={isProcessingPayment}
         />
       </Modal>
-
-      {orderId && (
-        <button
-          data-api-key="1y0D48xaDriWO_CNz7oXUopfkKx5VjiExsdDW0gj2eA"
-          data-order-id={orderId}
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Pagar
-        </button>
-      )}
     </div>
   );
 };
