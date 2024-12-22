@@ -1,0 +1,726 @@
+=== Estructura de Directorios ===
+├── App.tsx
+├── components
+│   ├── Modal.tsx
+│   ├── NumberSelector.tsx
+│   ├── PaymentModal.tsx
+│   └── RegistrationForm.tsx
+├── config
+│   └── constants.ts
+├── index.css
+├── main.tsx
+├── services
+│   ├── api.ts
+│   ├── email.ts
+│   ├── payment
+│   │   ├── index.ts
+│   │   ├── links.ts
+│   │   ├── methods.ts
+│   │   └── types.ts
+│   └── payment.ts
+├── types
+│   └── index.ts
+├── utils
+│   ├── email.ts
+│   └── storage.ts
+└── vite-env.d.ts
+
+
+=== Contenido de los Archivos Concatenados ===
+
+--- Contenido de NumberSelector.tsx ---
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, X, Smartphone } from 'lucide-react';
+import { saveCustomerData, getTakenNumbers } from '../services/api';
+import { PAYMENT_CONFIG } from '../config/constants';
+import Modal from './Modal';
+import RegistrationForm from './RegistrationForm';
+import type { CustomerData } from '../types';
+
+const MAX_NUMBERS = 4;
+
+const NumberSelector: React.FC = () => {
+  const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [takenNumbers, setTakenNumbers] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchTakenNumbers = async () => {
+      try {
+        const taken = await getTakenNumbers();
+        setTakenNumbers(taken);
+      } catch (error) {
+        console.error('Error fetching taken numbers:', error);
+      }
+    };
+
+    fetchTakenNumbers();
+  }, []);
+
+  const handleNumberSelect = (number: string) => {
+    if (selectedNumbers.length < MAX_NUMBERS && !selectedNumbers.includes(number) && !takenNumbers.includes(number)) {
+      setSelectedNumbers([...selectedNumbers, number]);
+    }
+  };
+
+  const handleRemoveNumber = (number: string) => {
+    setSelectedNumbers(selectedNumbers.filter((n) => n !== number));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputSubmit = () => {
+    const numbers = inputValue
+      .split(',')
+      .map((n) => n.trim().padStart(3, '0'))
+      .filter((n) => /^\d{3}$/.test(n) && parseInt(n) <= 999);
+
+    const newNumbers = numbers.filter((n) => !selectedNumbers.includes(n) && !takenNumbers.includes(n));
+    const availableSlots = MAX_NUMBERS - selectedNumbers.length;
+
+    setSelectedNumbers([
+      ...selectedNumbers,
+      ...newNumbers.slice(0, availableSlots)
+    ]);
+    setInputValue('');
+  };
+
+  const handleRegistrationSubmit = async (customerData: CustomerData) => {
+    try {
+      setIsProcessingPayment(true);
+      await saveCustomerData(customerData);
+      setIsModalOpen(false);
+      sessionStorage.setItem('customerData', JSON.stringify(customerData));
+
+      console.log("Redirigiendo a:", 'https://rifa.sheerit.com.co/generar_token.php');
+
+      window.location.href = 'https://rifa.sheerit.com.co/generar_token.php';
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Error al procesar la solicitud');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const filteredNumbers = Array.from({ length: 1000 }, (_, i) =>
+    i.toString().padStart(3, '0')
+  ).filter(num => num.includes(searchTerm) && !takenNumbers.includes(num));
+
+  return (
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          ¡Selecciona tus números de la suerte!
+        </h1>
+        <p className="text-gray-600">Selecciona 4 números para participar</p>
+      </div>
+
+      <div className="mb-6 space-y-4">
+        <div className="flex gap-4 flex-col sm:flex-row">
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar número..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <Search className="absolute left-3 top-2.5 text-gray-400 h-5 w-5" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="relative flex gap-2">
+              <input
+                type="text"
+                placeholder="Ingrese números separados por comas..."
+                value={inputValue}
+                onChange={handleInputChange}
+                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={handleInputSubmit}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {selectedNumbers.map((number) => (
+            <div
+              key={number}
+              className="flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-full"
+            >
+              <span>{number}</span>
+              <button
+                onClick={() => handleRemoveNumber(number)}
+                className="text-blue-600 hover:text-blue-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {selectedNumbers.length === MAX_NUMBERS && (
+          <div className="text-center">
+            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+              <p className="text-lg font-semibold text-blue-800">
+                Total a pagar: ${PAYMENT_CONFIG.PACKAGE_PRICE.toLocaleString('es-CO')}
+              </p>
+              <p className="text-sm text-blue-600">
+                Paquete de {MAX_NUMBERS} números
+              </p>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors inline-flex items-center gap-2"
+            >
+              <Smartphone className="h-5 w-5" />
+              Continuar
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+        {filteredNumbers.map((number) => (
+          <button
+            key={number}
+            onClick={() => handleNumberSelect(number)}
+            disabled={selectedNumbers.includes(number) || selectedNumbers.length >= MAX_NUMBERS}
+            className={`p-2 text-center rounded-lg transition-colors ${
+              selectedNumbers.includes(number)
+                ? 'bg-blue-500 text-white'
+                : selectedNumbers.length >= MAX_NUMBERS
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+            }`}
+          >
+            {number}
+          </button>
+        ))}
+      </div>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <RegistrationForm
+          onSubmit={handleRegistrationSubmit}
+          selectedNumbers={selectedNumbers}
+          isSubmitting={isProcessingPayment}
+        />
+      </Modal>
+    </div>
+  );
+};
+
+export default NumberSelector;
+--- Contenido de PaymentModal.tsx ---
+import React, { useState, useEffect } from 'react';
+import { Loader2, Building2, CreditCard } from 'lucide-react';
+import { getPaymentMethods, createPaymentLink } from '../services/payment';
+import { PAYMENT_CONFIG } from '../config/constants';
+
+interface Props {
+  onSuccess: () => void;
+  onError: (error: string) => void;
+}
+
+const PAYMENT_ICONS = {
+  PSE: Building2,
+  NEQUI: CreditCard,
+  BOTON_BANCOLOMBIA: Building2
+} as const;
+
+const PAYMENT_LABELS = {
+  PSE: 'PSE',
+  NEQUI: 'Nequi',
+  BOTON_BANCOLOMBIA: 'Botón Bancolombia'
+} as const;
+
+const PaymentModal: React.FC<Props> = ({ onSuccess, onError }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadPaymentMethods();
+  }, []);
+
+  const loadPaymentMethods = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const methods = await getPaymentMethods();
+      setPaymentMethods(Object.keys(methods));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar métodos de pago';
+      setError(errorMessage);
+      onError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePayment = async (method: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const paymentUrl = await createPaymentLink();
+      window.location.href = paymentUrl;
+      onSuccess();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al procesar el pago';
+      setError(errorMessage);
+      onError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-red-600 mb-4">{error}</p>
+        <button
+          onClick={loadPaymentMethods}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-center">
+      <h3 className="text-xl font-bold mb-4">Selecciona tu método de pago</h3>
+      <p className="mb-6">
+        Total a pagar: ${PAYMENT_CONFIG.PACKAGE_PRICE.toLocaleString('es-CO')}
+      </p>
+      
+      <div className="space-y-3">
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          </div>
+        ) : (
+          paymentMethods.map((method) => {
+            const Icon = PAYMENT_ICONS[method as keyof typeof PAYMENT_ICONS];
+            return (
+              <button
+                key={method}
+                onClick={() => handlePayment(method)}
+                disabled={isLoading}
+                className="w-full bg-white border-2 border-gray-200 p-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className="h-6 w-6" />
+                  <span className="font-medium">
+                    {PAYMENT_LABELS[method as keyof typeof PAYMENT_LABELS]}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default PaymentModal;
+--- Contenido de Modal.tsx ---
+import React from 'react';
+import { X } from 'lucide-react';
+import { ModalProps } from '../types';
+
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <X className="h-6 w-6" />
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export default Modal;
+--- Contenido de RegistrationForm.tsx ---
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { CustomerData } from '../types';
+
+const schema = z.object({
+  firstName: z.string().min(2, 'El nombre es requerido'),
+  lastName: z.string().min(2, 'El apellido es requerido'),
+  email: z.string().email('Email inválido'),
+  whatsapp: z.string().min(10, 'Número de WhatsApp inválido'),
+});
+
+interface Props {
+  onSubmit: (data: CustomerData) => void;
+  selectedNumbers: string[];
+}
+
+const RegistrationForm: React.FC<Props> = ({ onSubmit, selectedNumbers }) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CustomerData>({
+    resolver: zodResolver(schema),
+  });
+
+  const onFormSubmit = (data: Omit<CustomerData, 'numbers'>) => {
+    onSubmit({ ...data, numbers: selectedNumbers });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Datos de Registro</h2>
+        
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Nombre</label>
+        <input
+          {...register('firstName')}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2"
+        />
+        {errors.firstName && (
+          <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Apellido</label>
+        <input
+          {...register('lastName')}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2"
+        />
+        {errors.lastName && (
+          <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Email</label>
+        <input
+          {...register('email')}
+          type="email"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2"
+        />
+        {errors.email && (
+          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">WhatsApp</label>
+        <input
+          {...register('whatsapp')}
+          type="tel"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2"
+        />
+        {errors.whatsapp && (
+          <p className="mt-1 text-sm text-red-600">{errors.whatsapp.message}</p>
+        )}
+      </div>
+
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <p className="font-medium text-blue-800">Números seleccionados:</p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {selectedNumbers.map((number) => (
+            <span key={number} className="bg-blue-100 px-3 py-1 rounded-full text-blue-800">
+              {number}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+       Continuar al Pago
+      </button>
+    </form>
+  );
+};
+
+export default RegistrationForm;
+--- Contenido de constants.ts ---
+export const PAYMENT_CONFIG = {
+  PACKAGE_PRICE: 15000,
+  CURRENCY: 'COP',
+  DESCRIPTION: 'Paquete de 4 números para rifa',
+  API_URL: 'http://rifa.sheerit.com.co/generar_token.php'
+} as const;
+--- Contenido de storage.ts ---
+import { Purchase } from '../types';
+
+const STORAGE_KEY = 'lottery_purchases';
+
+export const getPurchases = (): Purchase[] => {
+  const data = localStorage.getItem(STORAGE_KEY);
+  return data ? JSON.parse(data) : [];
+};
+
+export const savePurchase = (purchase: Purchase): void => {
+  const purchases = getPurchases();
+  purchases.push(purchase);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(purchases));
+};
+
+export const isNumberTaken = (number: string): boolean => {
+  const purchases = getPurchases();
+  return purchases.some(purchase => purchase.numbers.includes(number));
+};
+--- Contenido de email.ts ---
+import { Customer } from '../types';
+
+// Simulated email service for browser environment
+export const sendConfirmationEmail = async (customer: Customer, numbers: string[]): Promise<boolean> => {
+  // In a real production environment, you would:
+  // 1. Call your backend API endpoint to handle email sending
+  // 2. The backend would use nodemailer or another email service
+  
+  console.log('Email would be sent with following details:', {
+    to: customer.email,
+    subject: '¡Confirmación de participación - iPhone 13 Pro Max!',
+    numbers,
+    customer
+  });
+
+  // For demo purposes, we'll simulate a successful email send
+  return true;
+};
+--- Contenido de index.ts ---
+export interface CustomerData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  whatsapp: string;
+  numbers: string[];
+}
+
+export interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+--- Contenido de email.ts ---
+import { Customer } from '../types';
+
+const YOPMAIL_DOMAIN = 'yopmail.com';
+
+export const createTemporaryEmail = (identifier: string): string => {
+  return `${identifier}@${YOPMAIL_DOMAIN}`;
+};
+
+export const sendConfirmationEmail = async (customer: Customer, numbers: string[]): Promise<void> => {
+  const tempEmail = createTemporaryEmail(`rifa_${Date.now()}`);
+  
+  console.log('Email confirmation details:', {
+    to: customer.email,
+    tempCopy: tempEmail,
+    subject: '¡Confirmación de participación - iPhone 13 Pro Max!',
+    numbers,
+    customer
+  });
+  
+  // In production, you would send this to your backend
+  // For now, we'll just log the temporary email for testing
+  console.log(`Check your confirmation at: https://yopmail.com/en/?login=${tempEmail}`);
+};
+--- Contenido de api.ts ---
+import { CustomerData } from '../types';
+
+export const saveCustomerData = async (data: CustomerData): Promise<void> => {
+  try {
+    const response = await fetch('https://rifa.sheerit.com.co/datos.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al guardar los datos');
+    }
+    
+    const successData = await response.json();
+    alert(successData.message);
+  } catch (error) {
+    console.error('Error saving customer data:', error);
+    throw new Error((error as Error).message || 'No se pudieron guardar los datos. Por favor, intente nuevamente.');
+  }
+};
+
+export const getTakenNumbers = async (): Promise<string[]> => {
+  try {
+    const response = await fetch('https://rifa.sheerit.com.co/numeros_tomados.php');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al obtener los números tomados');
+    }
+    const data = await response.json();
+    return data.takenNumbers;
+  } catch (error) {
+    console.error('Error fetching taken numbers:', error);
+    throw new Error((error as Error).message || 'No se pudieron obtener los números tomados. Por favor, intente nuevamente.');
+  }
+};
+--- Contenido de payment.ts ---
+export interface BoldCheckoutConfig {
+  orderId: string;
+  apiKey: string;
+  amount: number;
+  currency: string;
+  description: string;
+  tax: number;
+  integritySignature: string;
+  redirectionUrl: string;
+}
+
+export const initializeBoldCheckout = async (): Promise<void> => {
+  try {
+    const response = await fetch(PAYMENT_CONFIG.API_URL);
+    if (!response.ok) {
+      throw new Error('Error al obtener el token de pago');
+    }
+    
+    const data: BoldCheckoutConfig = await response.json();
+    
+    // @ts-ignore - Bold types no están disponibles en TS
+    const checkout = new BoldCheckout({
+      orderId: data.orderId,
+      apiKey: data.apiKey,
+      amount: data.amount,
+      currency: data.currency,
+      description: data.description,
+      tax: data.tax,
+      integritySignature: data.integritySignature,
+      redirectionUrl: data.redirectionUrl,
+    });
+    
+    checkout.open();
+  } catch (error) {
+    console.error('Error al inicializar el pago:', error);
+    throw new Error('No se pudo iniciar el proceso de pago. Por favor, intente nuevamente.');
+  }
+};
+--- Contenido de types.ts ---
+export interface PaymentMethod {
+  max: number;
+  min: number;
+}
+
+export interface PaymentMethods {
+  [key: string]: PaymentMethod;
+}
+
+export interface PaymentResponse {
+  payload: {
+    payment_methods?: { [key: string]: PaymentMethod };
+    payment_link?: string;
+    url?: string;
+  };
+  errors: string[];
+}
+--- Contenido de methods.ts ---
+import { createHeaders } from '../api';
+import { BOLD_API, PAYMENT_CONFIG } from '../../config/constants';
+import type { PaymentMethods, PaymentResponse } from './types';
+
+export const getPaymentMethods = async (): Promise<PaymentMethods> => {
+  try {
+    const response = await fetch(`${BOLD_API.BASE_URL}/online/link/v1/payment_methods`, {
+      method: 'GET',
+      headers: createHeaders(),
+      mode: 'cors',
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
+    
+    const data: PaymentResponse = await response.json();
+    
+    if (!data.payload.payment_methods) {
+      throw new Error('No hay métodos de pago disponibles');
+    }
+
+    return Object.fromEntries(
+      Object.entries(data.payload.payment_methods)
+        .filter(([key]) => PAYMENT_CONFIG.ALLOWED_METHODS.includes(key))
+    );
+  } catch (error) {
+    console.error('Error al obtener métodos de pago:', error);
+    throw new Error('No se pudieron cargar los métodos de pago. Por favor, intente nuevamente.');
+  }
+};
+--- Contenido de index.ts ---
+export * from './methods';
+export * from './links';
+export * from './types';
+--- Contenido de links.ts ---
+import { createHeaders } from '../api';
+import { BOLD_API, PAYMENT_CONFIG } from '../../config/constants';
+import type { PaymentResponse } from './types';
+
+export const createPaymentLink = async (): Promise<string> => {
+  try {
+    const response = await fetch(`${BOLD_API.BASE_URL}/online/link/v1`, {
+      method: 'POST',
+      headers: createHeaders(),
+      mode: 'cors',
+      credentials: 'include',
+      body: JSON.stringify({
+        amount_type: 'CLOSE',
+        amount: {
+          currency: PAYMENT_CONFIG.CURRENCY,
+          total_amount: PAYMENT_CONFIG.PACKAGE_PRICE
+        },
+        description: PAYMENT_CONFIG.DESCRIPTION,
+        payment_methods: PAYMENT_CONFIG.ALLOWED_METHODS,
+        expiration_date: Date.now() + PAYMENT_CONFIG.EXPIRATION_TIME
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error HTTP: ${response.status}`);
+    }
+    
+    const data: PaymentResponse = await response.json();
+    
+    if (!data.payload.url) {
+      throw new Error('No se recibió el enlace de pago');
+    }
+
+    return data.payload.url;
+  } catch (error) {
+    console.error('Error al crear enlace de pago:', error);
+    throw new Error('No se pudo crear el enlace de pago. Por favor, intente nuevamente.');
+  }
+};
