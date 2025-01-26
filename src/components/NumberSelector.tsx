@@ -74,6 +74,7 @@ const NumberSelector: React.FC = () => {
         },
         body: JSON.stringify({
           amount: PAYMENT_CONFIG.PACKAGE_PRICE,
+          currency: "COP",
           description: PAYMENT_CONFIG.DESCRIPTION,
           tax: "vat-19"
         })
@@ -84,8 +85,8 @@ const NumberSelector: React.FC = () => {
       }
 
       const paymentUrlData = await paymentUrlResponse.json();
-      const { integritySignature, orderId } = paymentUrlData || {};
-      const paymentUrl = `https://checkout.boldcommerce.com/?orderId=${encodeURIComponent(orderId)}&amount=${PAYMENT_CONFIG.PACKAGE_PRICE}&signature=${encodeURIComponent(integritySignature)}`;
+      const { integritySignature, orderId, apiKey } = paymentUrlData || {};
+      const paymentUrl = `https://checkout.boldcommerce.com/?orderId=${encodeURIComponent(orderId)}&amount=${encodeURIComponent(PAYMENT_CONFIG.PACKAGE_PRICE)}&currency=COP&signature=${encodeURIComponent(integritySignature)}&apiKey=${encodeURIComponent(apiKey)}`;
       window.location.href = paymentUrl;
 
     } catch (error) {
