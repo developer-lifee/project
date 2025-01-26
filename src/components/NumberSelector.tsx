@@ -85,9 +85,8 @@ const NumberSelector: React.FC = () => {
 
       const paymentUrlData = await paymentUrlResponse.json();
       const { integritySignature, orderId } = paymentUrlData || {};
-      console.log("Respuesta de generar_token.php:", paymentUrlData);
-
-      window.location.href = `https://rifa.sheerit.com.co/procesar-pago.php?token=${encodeURIComponent(integritySignature)}&orderId=${encodeURIComponent(orderId)}`;
+      const paymentUrl = `https://checkout.boldcommerce.com/?orderId=${encodeURIComponent(orderId)}&amount=${PAYMENT_CONFIG.PACKAGE_PRICE}&signature=${encodeURIComponent(integritySignature)}`;
+      window.location.href = paymentUrl;
 
     } catch (error) {
       console.error(error);
