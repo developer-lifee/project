@@ -67,8 +67,26 @@ const NumberSelector: React.FC = () => {
       setIsModalOpen(false);
       sessionStorage.setItem('customerData', JSON.stringify(customerData));
 
-      // Redirigir al usuario a procesar-pago.php
-      window.location.href = "https://rifa.sheerit.com.co/procesar-pago.php";
+      const paymentUrlResponse = await fetch('https://rifa.sheerit.com.co/generar_token.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: PAYMENT_CONFIG.PACKAGE_PRICE,
+          description: PAYMENT_CONFIG.DESCRIPTION,
+          tax: "vat-19"
+        })
+      });
+
+      if (!paymentUrlResponse.ok) {
+        throw new Error('Error al obtener la URL de pago');
+      }
+
+      const paymentUrlData = await paymentUrlResponse.json();
+      console.log("Respuesta de generar_token.php:", paymentUrlData);
+
+      window.location.href = `https://rifa.sheerit.com.co/procesar-pago.php?token=${encodeURIComponent(paymentUrlData.token)}`;
 
     } catch (error) {
       console.error(error);
