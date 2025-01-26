@@ -84,10 +84,10 @@ const NumberSelector: React.FC = () => {
       }
 
       const paymentUrlData = await paymentUrlResponse.json();
-      const { token, orderId } = paymentUrlData || {};
+      const { integritySignature, orderId } = paymentUrlData || {};
       console.log("Respuesta de generar_token.php:", paymentUrlData);
 
-      window.location.href = `https://rifa.sheerit.com.co/procesar-pago.php?token=${encodeURIComponent(token)}&orderId=${encodeURIComponent(orderId)}`;
+      window.location.href = `https://rifa.sheerit.com.co/procesar-pago.php?token=${encodeURIComponent(integritySignature)}&orderId=${encodeURIComponent(orderId)}`;
 
     } catch (error) {
       console.error(error);
