@@ -85,6 +85,7 @@ const NumberSelector: React.FC = () => {
 
       const paymentUrlData = await paymentUrlResponse.json();
       console.log("Respuesta de generar_token.php:", paymentUrlData);
+      console.log("Redireccionando a:", paymentUrlData.redirectionUrl);
 
       window.location.href = paymentUrlData.redirectionUrl;
 
