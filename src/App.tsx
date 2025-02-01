@@ -3,6 +3,7 @@ import NumberSelector from './components/NumberSelector';
 
 function App() {
   useEffect(() => {
+    const BoldCheckout = (window as any).BoldCheckout;
     if (typeof BoldCheckout !== 'undefined') {
       console.log('BoldCheckout is loaded:', BoldCheckout);
     } else {

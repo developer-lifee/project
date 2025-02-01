@@ -14,9 +14,10 @@ const schema = z.object({
 interface Props {
   onSubmit: (data: CustomerData) => void;
   selectedNumbers: string[];
+  isSubmitting: boolean; // Add this line
 }
 
-const RegistrationForm: React.FC<Props> = ({ onSubmit, selectedNumbers }) => {
+const RegistrationForm: React.FC<Props> = ({ onSubmit, selectedNumbers, isSubmitting }) => {
   const {
     register,
     handleSubmit,
@@ -93,8 +94,9 @@ const RegistrationForm: React.FC<Props> = ({ onSubmit, selectedNumbers }) => {
       <button
         type="submit"
         className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={isSubmitting}
       >
-       Continuar al Pago
+        {isSubmitting ? 'Submitting...' : 'Continuar al Pago'}
       </button>
     </form>
   );
