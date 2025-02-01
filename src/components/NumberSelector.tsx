@@ -8,6 +8,23 @@ import type { CustomerData } from '../types';
 
 const MAX_NUMBERS = 4;
 
+// Agrega la función para inicializar el script de Bold Checkout
+const initBoldCheckout = () => {
+    if (document.querySelector('script[src="https://checkout.bold.co/library/boldPaymentButton.js"]')) {
+        console.warn('Bold Checkout script is already loaded.');
+        return;
+    }
+    const js = document.createElement('script');
+    js.onload = () => {
+        window.dispatchEvent(new Event('boldCheckoutLoaded'));
+    };
+    js.onerror = () => {
+        window.dispatchEvent(new Event('boldCheckoutLoadFailed'));
+    };
+    js.src = 'https://checkout.bold.co/library/boldPaymentButton.js';
+    document.head.appendChild(js);
+};
+
 const NumberSelector: React.FC = () => {
   const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,8 +103,26 @@ const NumberSelector: React.FC = () => {
 
       const paymentUrlData = await paymentUrlResponse.json();
       const { integritySignature, orderId, apiKey } = paymentUrlData || {};
-      const paymentUrl = `https://checkout.boldcommerce.com/?orderId=${encodeURIComponent(orderId)}&amount=${encodeURIComponent(PAYMENT_CONFIG.PACKAGE_PRICE)}&currency=COP&signature=${encodeURIComponent(integritySignature)}&apiKey=${encodeURIComponent(apiKey)}`;
-      window.location.href = paymentUrl;
+
+      // Inicializar el script de Bold Checkout
+      initBoldCheckout();
+
+      // Cuando el script esté cargado, crear la instancia de BoldCheckout y abrir la pasarela
+      window.addEventListener('boldCheckoutLoaded', () => {
+        const checkout = new (window as any).BoldCheckout({
+          orderId,
+          currency: 'COP',
+          amount: PAYMENT_CONFIG.PACKAGE_PRICE,
+          apiKey,
+          integritySignature,
+          description: PAYMENT_CONFIG.DESCRIPTION,
+          tax: 'vat-19',
+          redirectionUrl: 'https://rifa.sheerit.com.co/resultado'
+        });
+        checkout.open();
+      });
+
+      console.log("Inicializando proceso de pago con BoldCheckout.");
 
     } catch (error) {
       console.error(error);
@@ -135,6 +170,7 @@ const NumberSelector: React.FC = () => {
               />
               <button
                 onClick={handleInputSubmit}
+                title="Agregar números"
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 <Plus className="h-5 w-5" />
@@ -152,6 +188,7 @@ const NumberSelector: React.FC = () => {
               <span>{number}</span>
               <button
                 onClick={() => handleRemoveNumber(number)}
+                title="Eliminar número"
                 className="text-blue-600 hover:text-blue-800"
               >
                 <X className="h-4 w-4" />
