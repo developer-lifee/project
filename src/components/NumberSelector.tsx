@@ -107,9 +107,13 @@ const NumberSelector: React.FC = () => {
       // Inicializar el script de Bold Checkout
       initBoldCheckout();
 
-      // Cuando el script esté cargado, crear la instancia de BoldCheckout y abrir la pasarela
-      window.addEventListener('boldCheckoutLoaded', () => {
-        const checkout = new (window as any).BoldCheckout({
+      const triggerCheckout = () => {
+        const BoldCheckout = (window as any).BoldCheckout;
+        if (!BoldCheckout) {
+          console.error('BoldCheckout is not defined');
+          return;
+        }
+        const checkout = new BoldCheckout({
           orderId,
           currency: 'COP',
           amount: PAYMENT_CONFIG.PACKAGE_PRICE,
@@ -120,7 +124,19 @@ const NumberSelector: React.FC = () => {
           redirectionUrl: 'https://rifa.sheerit.com.co/resultado'
         });
         checkout.open();
-      });
+      };
+
+      // Check immediately if BoldCheckout is available
+      if ((window as any).BoldCheckout) {
+        triggerCheckout();
+      } else {
+        // Si aún no está disponible, espera el evento
+        window.addEventListener('boldCheckoutLoaded', triggerCheckout);
+        window.addEventListener('boldCheckoutLoadFailed', () => {
+          console.error('Failed to load Bold Checkout script');
+          alert('Failed to load payment gateway. Please try again later.');
+        });
+      }
 
       console.log("Inicializando proceso de pago con BoldCheckout.");
 
