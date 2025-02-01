@@ -8,23 +8,6 @@ import type { CustomerData } from '../types';
 
 const MAX_NUMBERS = 4;
 
-// Agrega la función para inicializar el script de Bold Checkout
-const initBoldCheckout = () => {
-    if (document.querySelector('script[src="https://checkout.bold.co/library/boldPaymentButton.js"]')) {
-        console.warn('Bold Checkout script is already loaded.');
-        return;
-    }
-    const js = document.createElement('script');
-    js.onload = () => {
-        window.dispatchEvent(new Event('boldCheckoutLoaded'));
-    };
-    js.onerror = () => {
-        window.dispatchEvent(new Event('boldCheckoutLoadFailed'));
-    };
-    js.src = 'https://checkout.bold.co/library/boldPaymentButton.js';
-    document.head.appendChild(js);
-};
-
 const NumberSelector: React.FC = () => {
   const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,9 +69,7 @@ const NumberSelector: React.FC = () => {
 
       const paymentUrlResponse = await fetch('https://rifa.sheerit.com.co/generar_token.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: PAYMENT_CONFIG.PACKAGE_PRICE,
           currency: "COP",
@@ -96,15 +77,12 @@ const NumberSelector: React.FC = () => {
           tax: "vat-19"
         })
       });
-
-      if (!paymentUrlResponse.ok) {
-        throw new Error('Error al obtener la URL de pago');
-      }
+      if (!paymentUrlResponse.ok) throw new Error('Error al obtener la URL de pago');
 
       const paymentUrlData = await paymentUrlResponse.json();
       const { integritySignature, orderId, apiKey } = paymentUrlData || {};
 
-      // Inicializar el script de Bold Checkout
+      // Inicia la carga del script
       initBoldCheckout();
 
       const triggerCheckout = () => {
@@ -116,7 +94,7 @@ const NumberSelector: React.FC = () => {
         const checkout = new BoldCheckout({
           orderId,
           currency: 'COP',
-          amount: PAYMENT_CONFIG.PACKAGE_PRICE,
+          amount: String(PAYMENT_CONFIG.PACKAGE_PRICE),
           apiKey,
           integritySignature,
           description: PAYMENT_CONFIG.DESCRIPTION,
@@ -126,20 +104,17 @@ const NumberSelector: React.FC = () => {
         checkout.open();
       };
 
-      // Check immediately if BoldCheckout is available
+      // Llama triggerCheckout cuando el script se haya cargado
       if ((window as any).BoldCheckout) {
         triggerCheckout();
       } else {
-        // Si aún no está disponible, espera el evento
         window.addEventListener('boldCheckoutLoaded', triggerCheckout);
         window.addEventListener('boldCheckoutLoadFailed', () => {
           console.error('Failed to load Bold Checkout script');
           alert('Failed to load payment gateway. Please try again later.');
         });
       }
-
       console.log("Inicializando proceso de pago con BoldCheckout.");
-
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : 'Error al procesar la solicitud');
@@ -186,7 +161,6 @@ const NumberSelector: React.FC = () => {
               />
               <button
                 onClick={handleInputSubmit}
-                title="Agregar números"
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 <Plus className="h-5 w-5" />
@@ -204,7 +178,6 @@ const NumberSelector: React.FC = () => {
               <span>{number}</span>
               <button
                 onClick={() => handleRemoveNumber(number)}
-                title="Eliminar número"
                 className="text-blue-600 hover:text-blue-800"
               >
                 <X className="h-4 w-4" />
