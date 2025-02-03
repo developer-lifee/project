@@ -1,9 +1,11 @@
+// NumberSelector.tsx
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, X, Smartphone } from 'lucide-react';
 import { saveCustomerData, getTakenNumbers } from '../services/api';
 import { PAYMENT_CONFIG } from '../config/constants';
 import Modal from './Modal';
 import RegistrationForm from './RegistrationForm';
+import PaymentIframe from './PaymentIframe';
 import type { CustomerData } from '../types';
 
 const MAX_NUMBERS = 4;
@@ -15,6 +17,7 @@ const NumberSelector: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [takenNumbers, setTakenNumbers] = useState<string[]>([]);
+  const [showPaymentIframe, setShowPaymentIframe] = useState(false);
 
   useEffect(() => {
     const fetchTakenNumbers = async () => {
@@ -25,7 +28,6 @@ const NumberSelector: React.FC = () => {
         console.error('Error fetching taken numbers:', error);
       }
     };
-
     fetchTakenNumbers();
   }, []);
 
@@ -48,10 +50,8 @@ const NumberSelector: React.FC = () => {
       .split(',')
       .map((n) => n.trim().padStart(3, '0'))
       .filter((n) => /^\d{3}$/.test(n) && parseInt(n) <= 999);
-
     const newNumbers = numbers.filter((n) => !selectedNumbers.includes(n) && !takenNumbers.includes(n));
     const availableSlots = MAX_NUMBERS - selectedNumbers.length;
-
     setSelectedNumbers([
       ...selectedNumbers,
       ...newNumbers.slice(0, availableSlots)
@@ -64,57 +64,10 @@ const NumberSelector: React.FC = () => {
     try {
       await saveCustomerData(customerData);
       console.log("Datos del cliente guardados exitosamente");
-      setIsModalOpen(false);
+      // NO cerramos el modal para mantenerlo abierto
       sessionStorage.setItem('customerData', JSON.stringify(customerData));
-
-      const paymentUrlResponse = await fetch('https://rifa.sheerit.com.co/generar_token.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: PAYMENT_CONFIG.PACKAGE_PRICE,
-          currency: "COP",
-          description: PAYMENT_CONFIG.DESCRIPTION,
-          tax: "vat-19"
-        })
-      });
-      if (!paymentUrlResponse.ok) throw new Error('Error al obtener la URL de pago');
-
-      const paymentUrlData = await paymentUrlResponse.json();
-      const { integritySignature, orderId, apiKey } = paymentUrlData || {};
-
-      // Inicia la carga del script
-      initBoldCheckout();
-
-      const triggerCheckout = () => {
-        const BoldCheckout = (window as any).BoldCheckout;
-        if (!BoldCheckout) {
-          console.error('BoldCheckout is not defined');
-          return;
-        }
-        const checkout = new BoldCheckout({
-          orderId,
-          currency: 'COP',
-          amount: String(PAYMENT_CONFIG.PACKAGE_PRICE),
-          apiKey,
-          integritySignature,
-          description: PAYMENT_CONFIG.DESCRIPTION,
-          tax: 'vat-19',
-          redirectionUrl: 'https://rifa.sheerit.com.co/resultado'
-        });
-        checkout.open();
-      };
-
-      // Llama triggerCheckout cuando el script se haya cargado
-      if ((window as any).BoldCheckout) {
-        triggerCheckout();
-      } else {
-        window.addEventListener('boldCheckoutLoaded', triggerCheckout);
-        window.addEventListener('boldCheckoutLoadFailed', () => {
-          console.error('Failed to load Bold Checkout script');
-          alert('Failed to load payment gateway. Please try again later.');
-        });
-      }
-      console.log("Inicializando proceso de pago con BoldCheckout.");
+      // Reemplazamos el contenido del modal por el iframe de pago
+      setShowPaymentIframe(true);
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : 'Error al procesar la solicitud');
@@ -227,11 +180,15 @@ const NumberSelector: React.FC = () => {
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <RegistrationForm
-          onSubmit={handleRegistrationSubmit}
-          selectedNumbers={selectedNumbers}
-          isSubmitting={isProcessingPayment}
-        />
+        {showPaymentIframe ? (
+          <PaymentIframe />
+        ) : (
+          <RegistrationForm
+            onSubmit={handleRegistrationSubmit}
+            selectedNumbers={selectedNumbers}
+            isSubmitting={isProcessingPayment}
+          />
+        )}
       </Modal>
     </div>
   );
