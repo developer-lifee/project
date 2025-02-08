@@ -1,12 +1,23 @@
-// NumberSelector.tsx
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, X, Smartphone } from 'lucide-react';
-import { saveCustomerData, getTakenNumbers } from '../services/api';
+import { getTakenNumbers } from '../services/api';
 import { PAYMENT_CONFIG } from '../config/constants';
 import Modal from './Modal';
 import RegistrationForm from './RegistrationForm';
-import PaymentIframe from './PaymentIframe';
+import PaymentButton from './PaymentButton';
 import type { CustomerData } from '../types';
+
+// Nuevo tipo para la configuración de pago
+interface PaymentData {
+  apiKey: string;
+  orderId: string;
+  amount: string;
+  currency: string;
+  description: string;
+  tax: string;
+  integritySignature: string;
+  redirectionUrl: string;
+}
 
 const MAX_NUMBERS = 4;
 
@@ -17,7 +28,7 @@ const NumberSelector: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [takenNumbers, setTakenNumbers] = useState<string[]>([]);
-  const [showPaymentIframe, setShowPaymentIframe] = useState(false);
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
 
   useEffect(() => {
     const fetchTakenNumbers = async () => {
@@ -28,6 +39,7 @@ const NumberSelector: React.FC = () => {
         console.error('Error fetching taken numbers:', error);
       }
     };
+
     fetchTakenNumbers();
   }, []);
 
@@ -50,8 +62,10 @@ const NumberSelector: React.FC = () => {
       .split(',')
       .map((n) => n.trim().padStart(3, '0'))
       .filter((n) => /^\d{3}$/.test(n) && parseInt(n) <= 999);
+
     const newNumbers = numbers.filter((n) => !selectedNumbers.includes(n) && !takenNumbers.includes(n));
     const availableSlots = MAX_NUMBERS - selectedNumbers.length;
+
     setSelectedNumbers([
       ...selectedNumbers,
       ...newNumbers.slice(0, availableSlots)
@@ -62,12 +76,24 @@ const NumberSelector: React.FC = () => {
   const handleRegistrationSubmit = async (customerData: CustomerData) => {
     setIsProcessingPayment(true);
     try {
-      await saveCustomerData(customerData);
-      console.log("Datos del cliente guardados exitosamente");
-      // NO cerramos el modal para mantenerlo abierto
       sessionStorage.setItem('customerData', JSON.stringify(customerData));
-      // Reemplazamos el contenido del modal por el iframe de pago
-      setShowPaymentIframe(true);
+      console.log("Datos del cliente guardados temporalmente");
+      const response = await fetch(PAYMENT_CONFIG.API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: PAYMENT_CONFIG.PACKAGE_PRICE,
+          currency: PAYMENT_CONFIG.CURRENCY,
+          description: PAYMENT_CONFIG.DESCRIPTION,
+          tax: "vat-19",
+          numbers: selectedNumbers,
+          customer: customerData
+        }),
+      });
+      if (!response.ok) throw new Error('Error al obtener el token de pago');
+      const data = await response.json();
+      setPaymentData(data);
+      setIsModalOpen(true);
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : 'Error al procesar la solicitud');
@@ -180,8 +206,17 @@ const NumberSelector: React.FC = () => {
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        {showPaymentIframe ? (
-          <PaymentIframe />
+        {paymentData ? (
+          <PaymentButton
+            apiKey={paymentData.apiKey}
+            orderId={paymentData.orderId}
+            amount={paymentData.amount}
+            currency={paymentData.currency}
+            description={paymentData.description}
+            tax={paymentData.tax}
+            integritySignature={paymentData.integritySignature}
+            redirectionUrl={paymentData.redirectionUrl}
+          />
         ) : (
           <RegistrationForm
             onSubmit={handleRegistrationSubmit}

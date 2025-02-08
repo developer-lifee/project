@@ -37,3 +37,18 @@ export const getTakenNumbers = async (): Promise<string[]> => {
     throw new Error((error as Error).message || 'No se pudieron obtener los números tomados. Por favor, intente nuevamente.');
   }
 };
+
+export async function savePurchase(customerData: any): Promise<void> {
+  try {
+    const response = await fetch('https://rifa.sheerit.com.co/procesar-pago.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(customerData)
+    });
+    if (!response.ok) {
+      throw new Error('Error al registrar la compra');
+    }
+  } catch (error) {
+    console.error('Error en savePurchase:', error);
+  }
+}
