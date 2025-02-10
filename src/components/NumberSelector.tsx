@@ -1,23 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, X, Smartphone } from 'lucide-react';
-import { getTakenNumbers } from '../services/api';
+import { saveCustomerData, getTakenNumbers } from '../services/api';
 import { PAYMENT_CONFIG } from '../config/constants';
 import Modal from './Modal';
 import RegistrationForm from './RegistrationForm';
-import PaymentButton from './PaymentButton';
 import type { CustomerData } from '../types';
-
-// Nuevo tipo para la configuración de pago
-interface PaymentData {
-  apiKey: string;
-  orderId: string;
-  amount: string;
-  currency: string;
-  description: string;
-  tax: string;
-  integritySignature: string;
-  redirectionUrl: string;
-}
 
 const MAX_NUMBERS = 4;
 
@@ -28,7 +15,6 @@ const NumberSelector: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [takenNumbers, setTakenNumbers] = useState<string[]>([]);
-  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
 
   useEffect(() => {
     const fetchTakenNumbers = async () => {
@@ -76,24 +62,33 @@ const NumberSelector: React.FC = () => {
   const handleRegistrationSubmit = async (customerData: CustomerData) => {
     setIsProcessingPayment(true);
     try {
+      await saveCustomerData(customerData);
+      console.log("Datos del cliente guardados exitosamente");
+      setIsModalOpen(false);
       sessionStorage.setItem('customerData', JSON.stringify(customerData));
-      console.log("Datos del cliente guardados temporalmente");
-      const response = await fetch(PAYMENT_CONFIG.API_URL, {
+
+      const paymentUrlResponse = await fetch('https://rifa.sheerit.com.co/generar_token.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           amount: PAYMENT_CONFIG.PACKAGE_PRICE,
-          currency: PAYMENT_CONFIG.CURRENCY,
+          currency: "COP",
           description: PAYMENT_CONFIG.DESCRIPTION,
-          tax: "vat-19",
-          numbers: selectedNumbers,
-          customer: customerData
-        }),
+          tax: "vat-19"
+        })
       });
-      if (!response.ok) throw new Error('Error al obtener el token de pago');
-      const data = await response.json();
-      setPaymentData(data);
-      setIsModalOpen(true);
+
+      if (!paymentUrlResponse.ok) {
+        throw new Error('Error al obtener la URL de pago');
+      }
+
+      const paymentUrlData = await paymentUrlResponse.json();
+      const { integritySignature, orderId, apiKey } = paymentUrlData || {};
+      const paymentUrl = `https://checkout.boldcommerce.com/?orderId=${encodeURIComponent(orderId)}&amount=${encodeURIComponent(PAYMENT_CONFIG.PACKAGE_PRICE)}&currency=COP&signature=${encodeURIComponent(integritySignature)}&apiKey=${encodeURIComponent(apiKey)}`;
+      window.location.href = paymentUrl;
+
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : 'Error al procesar la solicitud');
@@ -206,24 +201,11 @@ const NumberSelector: React.FC = () => {
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        {paymentData ? (
-          <PaymentButton
-            apiKey={paymentData.apiKey}
-            orderId={paymentData.orderId}
-            amount={paymentData.amount}
-            currency={paymentData.currency}
-            description={paymentData.description}
-            tax={paymentData.tax}
-            integritySignature={paymentData.integritySignature}
-            redirectionUrl={paymentData.redirectionUrl}
-          />
-        ) : (
-          <RegistrationForm
-            onSubmit={handleRegistrationSubmit}
-            selectedNumbers={selectedNumbers}
-            isSubmitting={isProcessingPayment}
-          />
-        )}
+        <RegistrationForm
+          onSubmit={handleRegistrationSubmit}
+          selectedNumbers={selectedNumbers}
+          isSubmitting={isProcessingPayment}
+        />
       </Modal>
     </div>
   );
