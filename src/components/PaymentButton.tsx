@@ -33,7 +33,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       document.body.appendChild(script);
     }
     if (containerRef.current) {
-      containerRef.current.innerHTML = ''; // Limpia contenedor
+      containerRef.current.innerHTML = ''; // Clear container
       const btnScript = document.createElement('script');
       btnScript.setAttribute('data-bold-button', '');
       btnScript.setAttribute('data-api-key', apiKey);

@@ -4,10 +4,10 @@ import Modal from './Modal';
 const ProductDetailsModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const images = [
-    '/images/iphone13promax1.jpg',
-    '/images/iphone13promax2.jpg',
-    '/images/iphone13promax3.jpg',
-    '/images/iphone13promax4.jpg',
+    '../../public/iphone13promax1.jpg',
+    '../../public/iphone13promax2.jpg',
+    '../../public/iphone13promax3.jpg',
+    '../../public/iphone13promax4.jpg',
   ];
   const [selectedImage, setSelectedImage] = useState(images[0]);
 
