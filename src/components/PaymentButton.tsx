@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface PaymentButtonProps {
   apiKey: string;
@@ -21,7 +21,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
   integritySignature,
   redirectionUrl,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [boldCheckoutLoaded, setBoldCheckoutLoaded] = useState(false);
 
   useEffect(() => {
     const scriptId = 'bold-payment-button-script';
@@ -30,25 +30,41 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       script.id = scriptId;
       script.src = 'https://checkout.bold.co/library/boldPaymentButton.js';
       script.async = true;
-      document.body.appendChild(script);
+      script.onload = () => setBoldCheckoutLoaded(true);
+      script.onerror = () =>
+        console.error('Error al cargar la librería de Bold');
+      document.head.appendChild(script);
+    } else {
+      setBoldCheckoutLoaded(true);
     }
-    if (containerRef.current) {
-      containerRef.current.innerHTML = ''; // Clear container
-      const btnScript = document.createElement('script');
-      btnScript.setAttribute('data-bold-button', '');
-      btnScript.setAttribute('data-api-key', apiKey);
-      btnScript.setAttribute('data-order-id', orderId);
-      btnScript.setAttribute('data-amount', amount);
-      btnScript.setAttribute('data-currency', currency);
-      btnScript.setAttribute('data-description', description);
-      btnScript.setAttribute('data-tax', tax);
-      btnScript.setAttribute('data-integrity-signature', integritySignature);
-      btnScript.setAttribute('data-redirection-url', redirectionUrl);
-      containerRef.current.appendChild(btnScript);
-    }
-  }, [apiKey, orderId, amount, currency, description, tax, integritySignature, redirectionUrl]);
+  }, []);
 
-  return <div ref={containerRef} />;
+  const handleClick = () => {
+    if (boldCheckoutLoaded && (window as any).BoldCheckout) {
+      const checkout = new (window as any).BoldCheckout({
+        orderId,
+        currency,
+        amount,
+        apiKey,
+        integritySignature,
+        description,
+        tax,
+        redirectionUrl,
+      });
+      checkout.open();
+    } else {
+      console.error('BoldCheckout no está disponible');
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition-colors"
+    >
+      Pagar ahora
+    </button>
+  );
 };
 
 export default PaymentButton;
