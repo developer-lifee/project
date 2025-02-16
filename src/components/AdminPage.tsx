@@ -38,10 +38,18 @@ const AdminPage: React.FC = () => {
   const handleRegistrationSubmit = async (customerData: any) => {
     setIsSubmitting(true);
     try {
-      // Agrega los números generados al objeto de cliente
-      customerData.numbers = selectedNumbers;
-      await saveCustomerData(customerData);
-      setMessage("Cliente registrado exitosamente");
+      // Build a WhatsApp message concatenating registration details and selected numbers
+      const message = encodeURIComponent(
+        `¡Estás participando con los números ${selectedNumbers.join(
+          ", "
+        )} por un gran iPhone 13 Pro Max!` +
+        `\n\nNombre: ${customerData.firstName} ${customerData.lastName}` +
+        `\nEmail: ${customerData.email}` +
+        `\nWhatsApp: ${customerData.whatsapp}`
+      );
+      // Replace <YOUR_WHATSAPP_NUMBER> with the actual WhatsApp number (including country code)
+      const whatsappURL = `https://wa.me/<YOUR_WHATSAPP_NUMBER>?text=${message}`;
+      window.location.href = whatsappURL;
     } catch (error: any) {
       setMessage("Error al registrar cliente: " + error.message);
     } finally {
