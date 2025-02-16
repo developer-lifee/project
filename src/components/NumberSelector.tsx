@@ -100,7 +100,8 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
           `\nEmail: ${customerData.email}` +
           `\nWhatsApp: ${customerData.whatsapp}`
         );
-        const whatsappURL = `https://wa.me/<YOUR_WHATSAPP_NUMBER>?text=${waMsg}`;
+        // Changed WhatsApp URL format to the simple "send" endpoint
+        const whatsappURL = `https://api.whatsapp.com/send?phone=${customerData.whatsapp}&text=${waMsg}`;
         window.location.href = whatsappURL;
       } catch (error: any) {
         setMessage("Error al registrar cliente: " + error.message);
@@ -126,7 +127,14 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
         });
         if (!response.ok) throw new Error('Error al obtener el token de pago');
         const data = await response.json();
-        setPaymentData(data);
+        const waMsg = encodeURIComponent(
+          `¡Estás participando con los números ${selectedNumbers.join(", ")} por un gran iPhone 13 Pro Max!` +
+          `\n\nNombre: ${customerData.firstName} ${customerData.lastName}` +
+          `\nEmail: ${customerData.email}` +
+          `\nWhatsApp: ${customerData.whatsapp}`
+        );
+        // Payment data now includes the WhatsApp message (for reference in PaymentButton if needed)
+        setPaymentData({ ...data, waMsg });
         setIsModalOpen(true);
       } catch (error) {
         console.error(error);
@@ -142,7 +150,42 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
   ).filter(num => num.includes(searchTerm) && !takenNumbers.includes(num));
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <div className="max-w-4xl mx-auto p-4 pt-24"> {/* Added top padding for fixed header */}
+      {/* Fixed header for search and inputs */}
+      <div className="fixed top-0 left-0 right-0 bg-white p-4 shadow-md z-40">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Buscar número..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Ingrese números separados por comas..."
+              value={inputValue}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div className="flex items-center">
+            {(selectedNumbers.length > 0) && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-green-500 text-white px-4 py-2 rounded"
+              >
+                {isAdmin ? 'Guardar datos' : 'Guardar y pagar rifa'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Existing header and description for numbers */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           ¡Selecciona tus números de la suerte!
@@ -160,38 +203,6 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
       </div>
 
       <div className="mb-6 space-y-4">
-        <div className="flex gap-4 flex-col sm:flex-row">
-          <div className="flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Buscar número..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <Search className="absolute left-3 top-2.5 text-gray-400 h-5 w-5" />
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="relative flex gap-2">
-              <input
-                type="text"
-                placeholder="Ingrese números separados por comas..."
-                value={inputValue}
-                onChange={handleInputChange}
-                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                onClick={handleInputSubmit}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <Plus className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div className="flex flex-wrap gap-2">
           {selectedNumbers.map((number) => (
             <div
@@ -209,22 +220,23 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
           ))}
         </div>
 
-        {selectedNumbers.length === MAX_NUMBERS && (
+        {(isAdmin ? selectedNumbers.length > 0 : selectedNumbers.length === MAX_NUMBERS) && (
           <div className="text-center">
-            <div className="bg-blue-50 p-4 rounded-lg mb-4">
-              <p className="text-lg font-semibold text-blue-800">
-                Total a pagar: ${PAYMENT_CONFIG.PACKAGE_PRICE.toLocaleString('es-CO')}
-              </p>
-              <p className="text-sm text-blue-600">
-                Paquete de {MAX_NUMBERS} números
-              </p>
-            </div>
+            {!isAdmin && (
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <p className="text-lg font-semibold text-blue-800">
+                  Total a pagar: ${PAYMENT_CONFIG.PACKAGE_PRICE.toLocaleString('es-CO')}
+                </p>
+                <p className="text-sm text-blue-600">
+                  Paquete de {MAX_NUMBERS} números
+                </p>
+              </div>
+            )}
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors inline-flex items-center gap-2"
             >
-              <Smartphone className="h-5 w-5" />
-              Continuar
+              {isAdmin ? 'Guardar datos' : 'Guardar y pagar rifa'}
             </button>
           </div>
         )}
@@ -250,23 +262,34 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        {paymentData ? (
-          <PaymentButton
-            apiKey={paymentData.apiKey}
-            orderId={paymentData.orderId}
-            amount={paymentData.amount}
-            currency={paymentData.currency}
-            description={paymentData.description}
-            tax={paymentData.tax}
-            integritySignature={paymentData.integritySignature}
-            redirectionUrl={paymentData.redirectionUrl}
-          />
-        ) : (
+        {isAdmin ? (
           <RegistrationForm
             onSubmit={handleRegistrationSubmit}
             selectedNumbers={selectedNumbers}
             isSubmitting={isProcessingPayment}
+            adminMode={true}
           />
+        ) : (
+          // In non-admin mode, when paymentData exists show only PaymentButton (no extra WhatsApp link)
+          paymentData ? (
+            <PaymentButton
+              apiKey={paymentData.apiKey}
+              orderId={paymentData.orderId}
+              amount={paymentData.amount}
+              currency={paymentData.currency}
+              description={paymentData.description}
+              tax={paymentData.tax}
+              integritySignature={paymentData.integritySignature}
+              redirectionUrl={paymentData.redirectionUrl}
+            />
+          ) : (
+            <RegistrationForm
+              onSubmit={handleRegistrationSubmit}
+              selectedNumbers={selectedNumbers}
+              isSubmitting={isProcessingPayment}
+              adminMode={false}
+            />
+          )
         )}
       </Modal>
     </div>

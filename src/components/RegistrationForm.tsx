@@ -105,7 +105,7 @@ const RegistrationForm: React.FC<Props> = ({
         className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={isSubmitting}
       >
-        {isSubmitting ? 'Submitting...' : 'Continuar al Pago'}
+        {isSubmitting ? 'Submitting...' : (adminMode ? 'Guardar datos' : 'Guardar y pagar rifa')}
       </button>
     </form>
   );
