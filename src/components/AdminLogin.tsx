@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 
 interface AdminLoginProps {
   onLogin: () => void;
+  onClose?: () => void; // New optional prop
 }
 
-const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
+const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onClose }) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -21,7 +22,16 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
 
   return (
     <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded shadow max-w-sm w-full">
+      <div className="relative bg-white p-6 rounded shadow max-w-sm w-full">
+        {/* Close button */}
+        {onClose && (
+          <button 
+            onClick={onClose} 
+            className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+          >
+            X
+          </button>
+        )}
         <h2 className="text-xl font-bold mb-4 text-center">Login Admin</h2>
         <form onSubmit={handleLogin}>
           <input

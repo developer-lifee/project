@@ -3,6 +3,7 @@ import { saveCustomerData } from '../services/api';
 import RegistrationForm from './RegistrationForm';
 
 const ADMIN_PASSWORD = "admin123";
+const BACKEND_URL = "<BACKEND_URL>/datos.php"; // Replace with your URL
 
 // Generate 4 random numbers in "000" format
 const generateRandomNumbers = (): string[] => {
@@ -38,7 +39,22 @@ const AdminPage: React.FC = () => {
   const handleRegistrationSubmit = async (customerData: any) => {
     setIsSubmitting(true);
     try {
-      // Build a WhatsApp message concatenating registration details and selected numbers
+      // Prepare data payload
+      const payload = {
+        ...customerData,
+        numbers: selectedNumbers,
+      };
+      // Validate and save via your backend
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Error en la validación');
+      }
+      // On success, build the WhatsApp message
       const message = encodeURIComponent(
         `¡Estás participando con los números ${selectedNumbers.join(
           ", "
@@ -47,7 +63,7 @@ const AdminPage: React.FC = () => {
         `\nEmail: ${customerData.email}` +
         `\nWhatsApp: ${customerData.whatsapp}`
       );
-      // Replace <YOUR_WHATSAPP_NUMBER> with the actual WhatsApp number (including country code)
+      // Replace <YOUR_WHATSAPP_NUMBER> with the actual number
       const whatsappURL = `https://wa.me/<YOUR_WHATSAPP_NUMBER>?text=${message}`;
       window.location.href = whatsappURL;
     } catch (error: any) {
