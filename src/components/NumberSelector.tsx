@@ -150,9 +150,9 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
   ).filter(num => num.includes(searchTerm) && !takenNumbers.includes(num));
 
   return (
-    <div className="max-w-4xl mx-auto p-4 pt-24"> {/* Added top padding for fixed header */}
+    <div className="max-w-4xl mx-auto p-4 pt-32"> {/* Increased top padding from pt-24 to pt-32 */}
       {/* Fixed header for search and inputs */}
-      <div className="fixed top-0 left-0 right-0 bg-white p-4 shadow-md z-40">
+      <div className="fixed top-20 left-0 right-0 bg-white p-4 shadow-md z-40"> {/* Changed top-0 to top-20 */}
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="flex-1">
             <input
