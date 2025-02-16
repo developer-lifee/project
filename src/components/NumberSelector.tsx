@@ -8,6 +8,7 @@ import PaymentButton from './PaymentButton';
 import type { CustomerData } from '../types';
 
 const MAX_NUMBERS = 4;
+const BACKEND_URL = "https://rifa.sheerit.com.co/datos.php"; // Updated backend URL
 
 interface NumberSelectorProps {
   isAdmin?: boolean;
@@ -21,6 +22,7 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [takenNumbers, setTakenNumbers] = useState<string[]>([]);
   const [paymentData, setPaymentData] = useState<any>(null);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const fetchTakenNumbers = async () => {
@@ -79,30 +81,59 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
   };
 
   const handleRegistrationSubmit = async (customerData: CustomerData) => {
-    setIsProcessingPayment(true);
-    try {
-      sessionStorage.setItem('customerData', JSON.stringify(customerData));
-      const response = await fetch(PAYMENT_CONFIG.API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: PAYMENT_CONFIG.PACKAGE_PRICE,
-          currency: PAYMENT_CONFIG.CURRENCY,
-          description: PAYMENT_CONFIG.DESCRIPTION,
-          tax: "vat-19",
-          numbers: selectedNumbers,
-          customer: customerData
-        }),
-      });
-      if (!response.ok) throw new Error('Error al obtener el token de pago');
-      const data = await response.json();
-      setPaymentData(data);
-      setIsModalOpen(true);
-    } catch (error) {
-      console.error(error);
-      alert(error instanceof Error ? error.message : 'Error al procesar la solicitud');
-    } finally {
-      setIsProcessingPayment(false);
+    if (isAdmin) {
+      setIsProcessingPayment(true);
+      try {
+        const payload = { ...customerData, numbers: selectedNumbers };
+        const response = await fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Error en la validación');
+        }
+        const waMsg = encodeURIComponent(
+          `¡Estás participando con los números ${selectedNumbers.join(", ")} por un gran iPhone 13 Pro Max!` +
+          `\n\nNombre: ${customerData.firstName} ${customerData.lastName}` +
+          `\nEmail: ${customerData.email}` +
+          `\nWhatsApp: ${customerData.whatsapp}`
+        );
+        const whatsappURL = `https://wa.me/<YOUR_WHATSAPP_NUMBER>?text=${waMsg}`;
+        window.location.href = whatsappURL;
+      } catch (error: any) {
+        setMessage("Error al registrar cliente: " + error.message);
+        alert("Error al registrar cliente: " + error.message);
+      } finally {
+        setIsProcessingPayment(false);
+      }
+    } else {
+      setIsProcessingPayment(true);
+      try {
+        sessionStorage.setItem('customerData', JSON.stringify(customerData));
+        const response = await fetch(PAYMENT_CONFIG.API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: PAYMENT_CONFIG.PACKAGE_PRICE,
+            currency: PAYMENT_CONFIG.CURRENCY,
+            description: PAYMENT_CONFIG.DESCRIPTION,
+            tax: "vat-19",
+            numbers: selectedNumbers,
+            customer: customerData
+          }),
+        });
+        if (!response.ok) throw new Error('Error al obtener el token de pago');
+        const data = await response.json();
+        setPaymentData(data);
+        setIsModalOpen(true);
+      } catch (error) {
+        console.error(error);
+        alert(error instanceof Error ? error.message : 'Error al procesar la solicitud');
+      } finally {
+        setIsProcessingPayment(false);
+      }
     }
   };
 

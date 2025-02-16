@@ -3,7 +3,7 @@ import { saveCustomerData } from '../services/api';
 import RegistrationForm from './RegistrationForm';
 
 const ADMIN_PASSWORD = "admin123";
-const BACKEND_URL = "<BACKEND_URL>/datos.php"; // Replace with your URL
+const BACKEND_URL = "https://rifa.sheerit.com.co/datos.php"; // Updated backend URL
 
 // Generate 4 random numbers in "000" format
 const generateRandomNumbers = (): string[] => {

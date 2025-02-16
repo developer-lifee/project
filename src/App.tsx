@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NumberSelector from './components/NumberSelector';
-import ProductDetailsModal from './components/ProductDetailsModal'; // Use modal version
+import ProductDetails from './components/ProductDetails'; // Use editable version in admin mode
+import ProductDetailsModal from './components/ProductDetailsModal';
 import AdminLogin from './components/AdminLogin';
 
 function App() {
@@ -38,9 +39,13 @@ function App() {
       )}
 
       <div className="container mx-auto">
-        {/* The product details now are shown only on demand via its own fixed button */}
-        <ProductDetailsModal />
-        {/* NumberSelector remains unchanged */}
+        {isAdmin ? (
+          // Editable product details only for admin
+          <ProductDetails isAdmin={true} />
+        ) : (
+          // Regular users see product details on demand via modal
+          <ProductDetailsModal />
+        )}
         <NumberSelector isAdmin={isAdmin} />
       </div>
     </div>
