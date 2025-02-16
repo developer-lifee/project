@@ -14,10 +14,16 @@ const schema = z.object({
 interface Props {
   onSubmit: (data: CustomerData) => void;
   selectedNumbers: string[];
-  isSubmitting: boolean; // Add this line
+  isSubmitting: boolean;
+  adminMode?: boolean;
 }
 
-const RegistrationForm: React.FC<Props> = ({ onSubmit, selectedNumbers, isSubmitting }) => {
+const RegistrationForm: React.FC<Props> = ({
+  onSubmit,
+  selectedNumbers,
+  isSubmitting,
+  adminMode = false,
+}) => {
   const {
     register,
     handleSubmit,
@@ -80,16 +86,19 @@ const RegistrationForm: React.FC<Props> = ({ onSubmit, selectedNumbers, isSubmit
         )}
       </div>
 
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <p className="font-medium text-blue-800">Números seleccionados:</p>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {selectedNumbers.map((number) => (
-            <span key={number} className="bg-blue-100 px-3 py-1 rounded-full text-blue-800">
-              {number}
-            </span>
-          ))}
+      {/* In non-admin mode, show selected numbers */}
+      {!adminMode && (
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <p className="font-medium text-blue-800">Números seleccionados:</p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {selectedNumbers.map((number) => (
+              <span key={number} className="bg-blue-100 px-3 py-1 rounded-full text-blue-800">
+                {number}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <button
         type="submit"

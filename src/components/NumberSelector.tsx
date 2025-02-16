@@ -9,7 +9,11 @@ import type { CustomerData } from '../types';
 
 const MAX_NUMBERS = 4;
 
-const NumberSelector: React.FC = () => {
+interface NumberSelectorProps {
+  isAdmin?: boolean;
+}
+
+const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
   const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [inputValue, setInputValue] = useState('');
@@ -30,6 +34,19 @@ const NumberSelector: React.FC = () => {
 
     fetchTakenNumbers();
   }, []);
+
+  const generateRandomNumbers = (): string[] => {
+    const nums = new Set<string>();
+    while (nums.size < MAX_NUMBERS) {
+      const num = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      nums.add(num);
+    }
+    return Array.from(nums);
+  };
+
+  const handleAutoSelect = () => {
+    setSelectedNumbers(generateRandomNumbers());
+  };
 
   const handleNumberSelect = (number: string) => {
     if (selectedNumbers.length < MAX_NUMBERS && !selectedNumbers.includes(number) && !takenNumbers.includes(number)) {
@@ -100,6 +117,15 @@ const NumberSelector: React.FC = () => {
           ¡Selecciona tus números de la suerte!
         </h1>
         <p className="text-gray-600">Selecciona 4 números para participar</p>
+      </div>
+
+      <div className="mb-4 text-center">
+        <button
+          onClick={handleAutoSelect}
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+        >
+          Generar Suerte
+        </button>
       </div>
 
       <div className="mb-6 space-y-4">
