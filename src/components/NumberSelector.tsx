@@ -5,6 +5,7 @@ import { PAYMENT_CONFIG } from '../config/constants';
 import Modal from './Modal';
 import RegistrationForm from './RegistrationForm';
 import PaymentButton from './PaymentButton';
+import ProductDetailsModal from './ProductDetailsModal'; // Newly imported
 import type { CustomerData } from '../types';
 
 const MAX_NUMBERS = 4;
@@ -23,6 +24,7 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
   const [takenNumbers, setTakenNumbers] = useState<string[]>([]);
   const [paymentData, setPaymentData] = useState<any>(null);
   const [message, setMessage] = useState("");
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false); // New state for product details modal
 
   useEffect(() => {
     const fetchTakenNumbers = async () => {
@@ -151,8 +153,22 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 pt-32"> {/* Increase top padding for fixed header */}
-      {/* Fixed header with search, comma-separated input, auto-select and submit buttons */}
+      {/* Fixed header with two rows */}
       <div className="fixed top-0 left-0 right-0 bg-white p-4 shadow-md z-40">
+        <div className="flex justify-center gap-4 mb-2">
+          <button
+            onClick={() => setIsDetailsOpen(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+          >
+            Detalles de la rifa
+          </button>
+          <button
+            onClick={handleAutoSelect}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+          >
+            Generar Suerte
+          </button>
+        </div>
         <div className="flex flex-col sm:flex-row items-center gap-2">
           <div className="flex-1">
             <input
@@ -178,13 +194,7 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
               Agregar
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleAutoSelect}
-              className="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 transition-colors"
-            >
-              Generar Suerte
-            </button>
+          <div className="flex items-center">
             {(selectedNumbers.length > 0) && (
               <button
                 onClick={() => setIsModalOpen(true)}
@@ -198,7 +208,7 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
       </div>
 
       {/* Existing header and description for numbers */}
-      <div className="text-center mt-24 mb-8">
+      <div className="text-center mt-28 mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           ¡Selecciona tus números de la suerte!
         </h1>
@@ -294,6 +304,11 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
             />
           )
         )}
+      </Modal>
+
+      {/* Details modal for product info */}
+      <Modal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)}>
+        <ProductDetailsModal />
       </Modal>
     </div>
   );
