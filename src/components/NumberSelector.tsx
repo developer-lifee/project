@@ -150,10 +150,10 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
   ).filter(num => num.includes(searchTerm) && !takenNumbers.includes(num));
 
   return (
-    <div className="max-w-4xl mx-auto p-4 pt-32"> {/* Increased top padding from pt-24 to pt-32 */}
-      {/* Fixed header for search and inputs */}
-      <div className="fixed top-20 left-0 right-0 bg-white p-4 shadow-md z-40"> {/* Changed top-0 to top-20 */}
-        <div className="flex flex-col sm:flex-row gap-2">
+    <div className="max-w-4xl mx-auto p-4 pt-32"> {/* Increase top padding for fixed header */}
+      {/* Fixed header with search, comma-separated input, auto-select and submit buttons */}
+      <div className="fixed top-0 left-0 right-0 bg-white p-4 shadow-md z-40">
+        <div className="flex flex-col sm:flex-row items-center gap-2">
           <div className="flex-1">
             <input
               type="text"
@@ -163,7 +163,7 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
               className="w-full p-2 border rounded"
             />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 flex gap-2">
             <input
               type="text"
               placeholder="Ingrese números separados por comas..."
@@ -171,12 +171,24 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
               onChange={handleInputChange}
               className="w-full p-2 border rounded"
             />
+            <button
+              onClick={handleInputSubmit}
+              className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 transition-colors"
+            >
+              Agregar
+            </button>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAutoSelect}
+              className="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 transition-colors"
+            >
+              Generar Suerte
+            </button>
             {(selectedNumbers.length > 0) && (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
               >
                 {isAdmin ? 'Guardar datos' : 'Guardar y pagar rifa'}
               </button>
@@ -186,20 +198,11 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
       </div>
 
       {/* Existing header and description for numbers */}
-      <div className="text-center mb-8">
+      <div className="text-center mt-24 mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           ¡Selecciona tus números de la suerte!
         </h1>
         <p className="text-gray-600">Selecciona 4 números para participar</p>
-      </div>
-
-      <div className="mb-4 text-center">
-        <button
-          onClick={handleAutoSelect}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
-        >
-          Generar Suerte
-        </button>
       </div>
 
       <div className="mb-6 space-y-4">
