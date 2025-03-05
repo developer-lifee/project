@@ -13,6 +13,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onClose }) => {
     e.preventDefault();
     if (password === "admin123") {
       onLogin();
+      if (onClose) onClose(); // Close the modal after successful login
       setError("");
       localStorage.setItem("isAdmin", "true");
     } else {
