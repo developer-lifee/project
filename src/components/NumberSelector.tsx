@@ -5,6 +5,7 @@ import { PAYMENT_CONFIG } from '../config/constants';
 import Modal from './Modal';
 import RegistrationForm from './RegistrationForm';
 import PaymentButton from './PaymentButton';
+import ProductDetailsModal from './ProductDetailsModal';
 import type { CustomerData } from '../types';
 
 const MAX_NUMBERS = 4;
@@ -181,7 +182,7 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
           </div>
         </div>
         
-        {/* Generate and submit buttons centered below */}
+        {/* Generate, submit and detalles buttons centered below */}
         <div className="flex justify-center mt-3 gap-4">
           <button
             onClick={handleAutoSelect}
@@ -189,8 +190,7 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
           >
             Generar Suerte
           </button>
-          
-          {(selectedNumbers.length > 0) && (
+          {(isAdmin || selectedNumbers.length === MAX_NUMBERS) && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
@@ -198,6 +198,7 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
               {isAdmin ? 'Guardar datos' : 'Guardar y pagar rifa'}
             </button>
           )}
+          <ProductDetailsModal />
         </div>
       </div>
 
