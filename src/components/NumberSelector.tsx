@@ -154,9 +154,13 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
     <div className="max-w-4xl mx-auto p-4 pt-32">
       {/* Fixed header with improved layout */}
       <div className="fixed top-0 left-0 right-0 bg-white p-4 shadow-md z-40">
+        {/* Detalles de la rifa button placed above search fields */}
+        <div className="mb-2">
+          <ProductDetailsModal />
+        </div>
         {/* Search and input fields */}
         <div className="flex flex-col sm:flex-row items-center gap-2">
-          <div className="flex-1">
+          <div className="w-full">
             <input
               type="text"
               placeholder="Buscar número..."
@@ -165,7 +169,7 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
               className="w-full p-2 border rounded"
             />
           </div>
-          <div className="flex-1 flex gap-2">
+          <div className="w-full flex gap-2">
             <input
               type="text"
               placeholder="Ingrese números separados por comas..."
@@ -181,12 +185,11 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
             </button>
           </div>
         </div>
-        
-        {/* Generate, submit and detalles buttons centered below */}
+        {/* Buttons group below search fields */}
         <div className="flex justify-center mt-3 gap-4">
           <button
             onClick={handleAutoSelect}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors"  // reduced size
           >
             Generar Suerte
           </button>
@@ -198,7 +201,6 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
               {isAdmin ? 'Guardar datos' : 'Guardar y pagar rifa'}
             </button>
           )}
-          <ProductDetailsModal />
         </div>
       </div>
 
