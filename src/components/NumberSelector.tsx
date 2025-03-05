@@ -154,7 +154,12 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
     <div className="max-w-4xl mx-auto p-4 pt-32">
       {/* Fixed header with improved layout */}
       <div className="fixed top-0 left-0 right-0 bg-white p-4 shadow-md z-40">
-        {/* Title moved to header */}
+        {/* Detalles de la rifa button at the very top */}
+        <div className="mb-2 text-center">
+          <ProductDetailsModal />
+        </div>
+        
+        {/* Title below details button */}
         <div className="text-center mb-3">
           <h1 className="text-xl font-bold text-gray-800">
             ¡Selecciona tus números de la suerte!
@@ -227,11 +232,11 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
           </div>
         </div>
         
-        {/* Generate, submit and detalles buttons centered below */}
+        {/* Generate and submit buttons centered below */}
         <div className="flex justify-center mt-3 gap-4">
           <button
             onClick={handleAutoSelect}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            className="bg-blue-500 text-white px-2 py-1 text-sm rounded hover:bg-blue-600 transition-colors"
           >
             Generar Suerte
           </button>
@@ -243,7 +248,6 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
               Guardar datos
             </button>
           )}
-          <ProductDetailsModal />
         </div>
       </div>
 
