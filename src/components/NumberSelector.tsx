@@ -152,34 +152,73 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 pt-32">
-      {/* Fixed header with improved layout */}
-      <div className="fixed top-0 left-0 right-0 bg-white p-4 shadow-md z-40">
+      {/* Fixed header with improved layout and luxury theme */}
+      <div className="fixed top-0 left-0 right-0 bg-gradient-to-b from-purple-900 to-purple-800 p-4 shadow-lg z-40">
         {/* Detalles de la rifa button at the very top */}
         <div className="mb-2 text-center">
           <ProductDetailsModal />
         </div>
         
-        {/* Title below details button */}
+        {/* Title with enhanced styling */}
         <div className="text-center mb-3">
-          <h1 className="text-xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-yellow-400">
             ¡Selecciona tus números de la suerte!
           </h1>
-          <p className="text-gray-600 text-sm">Selecciona 4 números para participar</p>
+          <p className="text-yellow-200 text-sm">Selecciona 4 números para participar</p>
         </div>
         
-        {/* Selected numbers preview */}
+        {/* Search and input fields with improved styling */}
+        <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
+          <div className="w-full">
+            <input
+              type="text"
+              placeholder="Buscar número..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full p-2 border-2 border-yellow-300 rounded bg-purple-50 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+          <div className="w-full flex gap-2">
+            <input
+              type="text"
+              placeholder="Ingrese números separados por comas..."
+              value={inputValue}
+              onChange={handleInputChange}
+              className="w-full p-2 border-2 border-yellow-300 rounded bg-purple-50 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            />
+            <button
+              onClick={handleInputSubmit}
+              className="bg-yellow-500 text-purple-900 font-semibold px-3 py-2 rounded hover:bg-yellow-400 transition-colors"
+            >
+              Agregar
+            </button>
+          </div>
+        </div>
+        
+        {/* Generate button with luxury styling */}
+        <div className="text-center mb-4">
+          <button
+            onClick={handleAutoSelect}
+            className="bg-yellow-500 text-purple-900 font-bold px-6 py-2 rounded-full shadow-lg hover:bg-yellow-400 transition-colors transform hover:scale-105"
+          >
+            Generar Suerte
+          </button>
+        </div>
+
+        {/* Selected numbers preview below Generate button */}
         {selectedNumbers.length > 0 && (
-          <div className="mb-3">
+          <div className="bg-purple-700 p-3 rounded-lg mb-3">
+            <p className="text-center text-yellow-200 mb-2">Tus números seleccionados:</p>
             <div className="flex flex-wrap justify-center gap-2">
               {selectedNumbers.map((number) => (
                 <div
                   key={number}
-                  className="flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-full"
+                  className="flex items-center gap-2 bg-yellow-100 px-3 py-1 rounded-full"
                 >
-                  <span>{number}</span>
+                  <span className="text-purple-900 font-semibold">{number}</span>
                   <button
                     onClick={() => handleRemoveNumber(number)}
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-purple-600 hover:text-purple-800"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -191,85 +230,36 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
         
         {/* Payment information when all numbers selected */}
         {!isAdmin && selectedNumbers.length === MAX_NUMBERS && (
-          <div className="bg-blue-50 p-2 rounded-lg mb-3 text-center">
-            <p className="font-semibold text-blue-800">
+          <div className="bg-gradient-to-r from-yellow-300 to-yellow-400 p-3 rounded-lg mb-3 text-center shadow-md">
+            <p className="font-bold text-purple-900 text-lg">
               Total a pagar: ${PAYMENT_CONFIG.PACKAGE_PRICE.toLocaleString('es-CO')}
             </p>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-green-500 text-white px-4 py-1 mt-1 rounded hover:bg-green-600 transition-colors"
+              className="bg-green-500 text-white font-bold px-6 py-2 mt-2 rounded-full hover:bg-green-600 transition-colors shadow-md transform hover:scale-105"
             >
               Guardar y pagar rifa
             </button>
           </div>
         )}
         
-        {/* Search and input fields */}
-        <div className="flex flex-col sm:flex-row items-center gap-2">
-          <div className="w-full">
-            <input
-              type="text"
-              placeholder="Buscar número..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div className="w-full flex gap-2">
-            <input
-              type="text"
-              placeholder="Ingrese números separados por comas..."
-              value={inputValue}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-            />
-            <button
-              onClick={handleInputSubmit}
-              className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 transition-colors"
-            >
-              Agregar
-            </button>
-          </div>
-        </div>
-        
-        {/* Generate and submit buttons centered below */}
-        <div className="flex justify-center mt-3 gap-4">
-          <button
-            onClick={handleAutoSelect}
-            className="bg-blue-500 text-white px-2 py-1 text-sm rounded hover:bg-blue-600 transition-colors"
-          >
-            Generar Suerte
-          </button>
-          {isAdmin && selectedNumbers.length > 0 && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-            >
-              Guardar datos
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Remove duplicate title from content area since it's now in header */}
-      <div className="mt-28 mb-8"></div>
-
-      <div className="mb-6 space-y-4">
-        {/* Keeping the existing selected numbers panel empty as we moved it to header */}
-        <div className="flex flex-wrap gap-2"></div>
-
-        {/* Moving payment panel to header, so removing it from here */}
+        {/* Admin save button if applicable */}
         {isAdmin && selectedNumbers.length > 0 && (
           <div className="text-center">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors inline-flex items-center gap-2"
+              className="bg-green-500 text-white font-bold px-6 py-2 rounded-full hover:bg-green-600 transition-colors shadow-md"
             >
               Guardar datos
             </button>
           </div>
         )}
       </div>
+
+      {/* Main content area with luxury-themed colors */}
+      <div className="mt-64 mb-8"></div> {/* Increased margin for the new larger header */}
+
+      <div className="mb-6 space-y-4"></div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
         {filteredNumbers.map((number) => (
@@ -277,12 +267,12 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
             key={number}
             onClick={() => handleNumberSelect(number)}
             disabled={selectedNumbers.includes(number) || selectedNumbers.length >= MAX_NUMBERS}
-            className={`p-2 text-center rounded-lg transition-colors ${
+            className={`p-2 text-center rounded-lg transition-colors shadow ${
               selectedNumbers.includes(number)
-                ? 'bg-blue-500 text-white'
+                ? 'bg-yellow-400 text-purple-900 font-bold'
                 : selectedNumbers.length >= MAX_NUMBERS
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-purple-100 hover:bg-yellow-200 text-purple-900 hover:shadow-md'
             }`}
           >
             {number}

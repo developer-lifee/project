@@ -13,10 +13,10 @@ const ProductDetailsModal: React.FC = () => {
 
   return (
     <>
-      {/* Botón fijo */}
+      {/* Botón with luxury styling */}
       <button
         onClick={() => setIsOpen(true)}
-        className="block mx-auto my-4 bg-blue-500 text-white px-3 py-2 rounded shadow hover:bg-blue-600 transition-colors"
+        className="block mx-auto my-2 bg-yellow-500 text-purple-900 font-bold px-4 py-1 rounded-full shadow hover:bg-yellow-400 transition-colors"
       >
         Detalles de la rifa
       </button>
