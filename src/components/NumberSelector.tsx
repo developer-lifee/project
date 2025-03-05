@@ -154,10 +154,51 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
     <div className="max-w-4xl mx-auto p-4 pt-32">
       {/* Fixed header with improved layout */}
       <div className="fixed top-0 left-0 right-0 bg-white p-4 shadow-md z-40">
-        {/* Detalles de la rifa button placed above search fields */}
-        <div className="mb-2">
-          <ProductDetailsModal />
+        {/* Title moved to header */}
+        <div className="text-center mb-3">
+          <h1 className="text-xl font-bold text-gray-800">
+            ¡Selecciona tus números de la suerte!
+          </h1>
+          <p className="text-gray-600 text-sm">Selecciona 4 números para participar</p>
         </div>
+        
+        {/* Selected numbers preview */}
+        {selectedNumbers.length > 0 && (
+          <div className="mb-3">
+            <div className="flex flex-wrap justify-center gap-2">
+              {selectedNumbers.map((number) => (
+                <div
+                  key={number}
+                  className="flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-full"
+                >
+                  <span>{number}</span>
+                  <button
+                    onClick={() => handleRemoveNumber(number)}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Payment information when all numbers selected */}
+        {!isAdmin && selectedNumbers.length === MAX_NUMBERS && (
+          <div className="bg-blue-50 p-2 rounded-lg mb-3 text-center">
+            <p className="font-semibold text-blue-800">
+              Total a pagar: ${PAYMENT_CONFIG.PACKAGE_PRICE.toLocaleString('es-CO')}
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-green-500 text-white px-4 py-1 mt-1 rounded hover:bg-green-600 transition-colors"
+            >
+              Guardar y pagar rifa
+            </button>
+          </div>
+        )}
+        
         {/* Search and input fields */}
         <div className="flex flex-col sm:flex-row items-center gap-2">
           <div className="w-full">
@@ -185,68 +226,42 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
             </button>
           </div>
         </div>
-        {/* Buttons group below search fields */}
+        
+        {/* Generate, submit and detalles buttons centered below */}
         <div className="flex justify-center mt-3 gap-4">
           <button
             onClick={handleAutoSelect}
-            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors"  // reduced size
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
           >
             Generar Suerte
           </button>
-          {(isAdmin || selectedNumbers.length === MAX_NUMBERS) && (
+          {isAdmin && selectedNumbers.length > 0 && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
             >
-              {isAdmin ? 'Guardar datos' : 'Guardar y pagar rifa'}
+              Guardar datos
             </button>
           )}
+          <ProductDetailsModal />
         </div>
       </div>
 
-      {/* Existing content */}
-      <div className="text-center mt-28 mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          ¡Selecciona tus números de la suerte!
-        </h1>
-        <p className="text-gray-600">Selecciona 4 números para participar</p>
-      </div>
+      {/* Remove duplicate title from content area since it's now in header */}
+      <div className="mt-28 mb-8"></div>
 
       <div className="mb-6 space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {selectedNumbers.map((number) => (
-            <div
-              key={number}
-              className="flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-full"
-            >
-              <span>{number}</span>
-              <button
-                onClick={() => handleRemoveNumber(number)}
-                className="text-blue-600 hover:text-blue-800"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-        </div>
+        {/* Keeping the existing selected numbers panel empty as we moved it to header */}
+        <div className="flex flex-wrap gap-2"></div>
 
-        {(isAdmin ? selectedNumbers.length > 0 : selectedNumbers.length === MAX_NUMBERS) && (
+        {/* Moving payment panel to header, so removing it from here */}
+        {isAdmin && selectedNumbers.length > 0 && (
           <div className="text-center">
-            {!isAdmin && (
-              <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                <p className="text-lg font-semibold text-blue-800">
-                  Total a pagar: ${PAYMENT_CONFIG.PACKAGE_PRICE.toLocaleString('es-CO')}
-                </p>
-                <p className="text-sm text-blue-600">
-                  Paquete de {MAX_NUMBERS} números
-                </p>
-              </div>
-            )}
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors inline-flex items-center gap-2"
             >
-              {isAdmin ? 'Guardar datos' : 'Guardar y pagar rifa'}
+              Guardar datos
             </button>
           </div>
         )}

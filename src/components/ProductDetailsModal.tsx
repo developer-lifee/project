@@ -55,9 +55,9 @@ const ProductDetailsModal: React.FC = () => {
             <li>
               <strong>Especificaciones:</strong> Pantalla Super Retina XDR de 6.7", Chip A15 Bionic, sistema de triple cámara y demás detalles de fábrica.
             </li>
-            <li><strong>Capacidad de batería:</strong> 100%</li>
+            <li><strong>Capacidad de batería:</strong>84%</li>
             <li>
-              <strong>Observación:</strong> El telefono esta en perfecto estado.
+              <strong>Observación:</strong> La aplicacion del modo cine solo funciona al x3.
             </li>
           </ul>
         </div>
