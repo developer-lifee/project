@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { saveCustomerData } from '../services/api';
 import RegistrationForm from './RegistrationForm';
 
 const ADMIN_PASSWORD = "admin123";
-const BACKEND_URL = "https://rifa.sheerit.com.co/datos.php"; // Updated backend URL
+const BACKEND_URL = "https://rifa.sheerit.com.co/datos.php";
+const IMAGE_UPLOAD_URL = "https://rifa.sheerit.com.co/upload.php"; // Add your PHP upload endpoint
 
 // Generate 4 random numbers in "000" format
 const generateRandomNumbers = (): string[] => {
@@ -21,6 +22,17 @@ const AdminPage: React.FC = () => {
   const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Image upload states
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [imageNames] = useState([
+    "iphone13promax1.jpg",
+    "iphone13promax2.jpg", 
+    "iphone13promax3.jpg", 
+    "iphone13promax4.jpg"
+  ]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +85,57 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      // Convert FileList to array for easier manipulation
+      const fileArray = Array.from(e.target.files);
+      setSelectedFiles(fileArray);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (selectedFiles.length === 0) {
+      setUploadStatus("Por favor selecciona archivos para subir");
+      return;
+    }
+
+    setUploadStatus("Subiendo archivos...");
+    setIsSubmitting(true);
+
+    try {
+      const uploadPromises = selectedFiles.map((file, index) => {
+        // Create a FormData object for each file
+        const formData = new FormData();
+        // Use predefined names instead of original file names
+        const targetFileName = index < imageNames.length ? imageNames[index] : file.name;
+        formData.append("uploadedFile", file, targetFileName);
+        
+        // Send the file to the PHP backend
+        return fetch(IMAGE_UPLOAD_URL, {
+          method: "POST",
+          body: formData,
+        }).then((response) => {
+          if (!response.ok) {
+            throw new Error(`Error uploading ${targetFileName}`);
+          }
+          return response.json();
+        });
+      });
+
+      const results = await Promise.all(uploadPromises);
+      setUploadStatus("Archivos subidos exitosamente");
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      setUploadStatus(`Error al subir archivos: ${error instanceof Error ? error.message : "Error desconocido"}`);
+    } finally {
+      setIsSubmitting(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="max-w-md mx-auto bg-white p-4 rounded shadow my-8">
@@ -101,27 +164,87 @@ const AdminPage: React.FC = () => {
 
   return (
     <div className="max-w-lg mx-auto bg-white p-6 rounded shadow my-8">
-      <h2 className="text-2xl font-bold mb-4 text-center">Registrar Cliente Directamente</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">Panel Administrador</h2>
       
-      {/* Button to auto-select 4 numbers */}
-      <div className="text-center mb-4">
+      {/* Image Upload Section */}
+      <div className="mb-8 p-4 border rounded-lg">
+        <h3 className="text-xl font-semibold mb-4">Gestionar Imágenes del Producto</h3>
+        
+        <p className="mb-2 text-sm text-gray-600">
+          Las imágenes se guardarán con los nombres siguientes en la carpeta 'public': 
+          {imageNames.join(", ")}
+        </p>
+        
+        <div className="mb-4">
+          <input
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            ref={fileInputRef}
+            className="block w-full text-sm text-gray-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-purple-50 file:text-purple-700
+              hover:file:bg-purple-100
+            "
+          />
+          <p className="mt-1 text-sm text-gray-500">
+            Selecciona hasta 4 imágenes (.jpg, .png)
+          </p>
+        </div>
+        
+        {selectedFiles.length > 0 && (
+          <div className="mb-4">
+            <p>Archivos seleccionados ({selectedFiles.length}):</p>
+            <ul className="list-disc list-inside text-sm">
+              {selectedFiles.map((file, index) => (
+                <li key={index}>
+                  {file.name} - {(file.size / 1024).toFixed(2)} KB → se subirá como {index < imageNames.length ? imageNames[index] : file.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
         <button
-          onClick={handleAutoSelect}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+          onClick={handleImageUpload}
+          disabled={isSubmitting || selectedFiles.length === 0}
+          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors disabled:opacity-50"
         >
-          Generar Suerte
+          {isSubmitting ? "Subiendo..." : "Subir imágenes"}
         </button>
-        {selectedNumbers.length > 0 && (
-          <p className="mt-2">Números: {selectedNumbers.join(", ")}</p>
+        
+        {uploadStatus && (
+          <p className={`mt-2 text-sm ${uploadStatus.includes("Error") ? "text-red-500" : "text-green-500"}`}>
+            {uploadStatus}
+          </p>
         )}
       </div>
+      
+      {/* Existing customer registration section */}
+      <div className="p-4 border rounded-lg">
+        <h3 className="text-xl font-semibold mb-4">Registrar Cliente Directamente</h3>
+        
+        <div className="text-center mb-4">
+          <button
+            onClick={handleAutoSelect}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+          >
+            Generar Suerte
+          </button>
+          {selectedNumbers.length > 0 && (
+            <p className="mt-2">Números: {selectedNumbers.join(", ")}</p>
+          )}
+        </div>
 
-      <RegistrationForm
-        onSubmit={handleRegistrationSubmit}
-        selectedNumbers={selectedNumbers}
-        isSubmitting={isSubmitting}
-        adminMode={true}
-      />
+        <RegistrationForm
+          onSubmit={handleRegistrationSubmit}
+          selectedNumbers={selectedNumbers}
+          isSubmitting={isSubmitting}
+          adminMode={true}
+        />
+      </div>
 
       {message && <p className="mt-4 text-center text-green-600">{message}</p>}
     </div>

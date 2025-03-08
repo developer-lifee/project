@@ -146,6 +146,34 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
     }
   };
 
+  // Add this function to handle direct payment without showing the registration form again
+  const handleDirectPayment = () => {
+    // Check if customer data is already available in sessionStorage
+    const storedCustomerData = sessionStorage.getItem('customerData');
+    if (storedCustomerData) {
+      // If we have customer data and payment data, go directly to payment
+      if (paymentData) {
+        const checkout = new (window as any).BoldCheckout({
+          orderId: paymentData.orderId,
+          currency: paymentData.currency,
+          amount: paymentData.amount,
+          apiKey: paymentData.apiKey,
+          integritySignature: paymentData.integritySignature,
+          description: paymentData.description,
+          tax: paymentData.tax,
+          redirectionUrl: paymentData.redirectionUrl,
+        });
+        checkout.open();
+      } else {
+        // We have customer data but need to get payment data
+        setIsModalOpen(true);
+      }
+    } else {
+      // No customer data, show registration form
+      setIsModalOpen(true);
+    }
+  };
+
   const filteredNumbers = Array.from({ length: 1000 }, (_, i) =>
     i.toString().padStart(3, '0')
   ).filter(num => num.includes(searchTerm) && !takenNumbers.includes(num));
@@ -228,15 +256,15 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
           </div>
         )}
         
-        {/* Payment information when all numbers selected */}
+        {/* Payment information when all numbers selected - updated styling */}
         {!isAdmin && selectedNumbers.length === MAX_NUMBERS && (
-          <div className="bg-gradient-to-r from-yellow-300 to-yellow-400 p-3 rounded-lg mb-3 text-center shadow-md">
-            <p className="font-bold text-purple-900 text-lg">
+          <div className="bg-purple-700 p-3 rounded-lg mb-3 text-center shadow-md border border-yellow-300">
+            <p className="font-bold text-yellow-300 text-lg">
               Total a pagar: ${PAYMENT_CONFIG.PACKAGE_PRICE.toLocaleString('es-CO')}
             </p>
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-green-500 text-white font-bold px-6 py-2 mt-2 rounded-full hover:bg-green-600 transition-colors shadow-md transform hover:scale-105"
+              onClick={handleDirectPayment}
+              className="bg-yellow-500 text-purple-900 font-bold px-6 py-2 mt-2 rounded-full hover:bg-yellow-400 transition-colors shadow-md transform hover:scale-105"
             >
               Guardar y pagar rifa
             </button>
@@ -289,18 +317,22 @@ const NumberSelector: React.FC<NumberSelectorProps> = ({ isAdmin = false }) => {
             adminMode={true}
           />
         ) : (
-          // In non-admin mode, when paymentData exists show only PaymentButton (no extra WhatsApp link)
+          // In non-admin mode, when paymentData exists show PaymentButton directly
           paymentData ? (
-            <PaymentButton
-              apiKey={paymentData.apiKey}
-              orderId={paymentData.orderId}
-              amount={paymentData.amount}
-              currency={paymentData.currency}
-              description={paymentData.description}
-              tax={paymentData.tax}
-              integritySignature={paymentData.integritySignature}
-              redirectionUrl={paymentData.redirectionUrl}
-            />
+            <div className="text-center">
+              <h2 className="text-xl font-bold mb-4">Realizar pago</h2>
+              <p className="mb-4">Estás a un paso de participar con los números: {selectedNumbers.join(", ")}</p>
+              <PaymentButton
+                apiKey={paymentData.apiKey}
+                orderId={paymentData.orderId}
+                amount={paymentData.amount}
+                currency={paymentData.currency}
+                description={paymentData.description}
+                tax={paymentData.tax}
+                integritySignature={paymentData.integritySignature}
+                redirectionUrl={paymentData.redirectionUrl}
+              />
+            </div>
           ) : (
             <RegistrationForm
               onSubmit={handleRegistrationSubmit}

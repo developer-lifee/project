@@ -15,6 +15,12 @@ function App() {
     }
   }, []);
 
+  // Function to handle admin login success
+  const handleAdminLogin = () => {
+    // Your admin login success logic
+    console.log("Admin logged in successfully");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       {/* Fixed button for Admin/Cliente */}
@@ -35,7 +41,10 @@ function App() {
       </div>
 
       {showAdminLogin && !isAdmin && (
-        <AdminLogin onLogin={() => { setIsAdmin(true); setShowAdminLogin(false); }} />
+        <AdminLogin 
+          onLogin={() => { setIsAdmin(true); setShowAdminLogin(false); }} 
+          onClose={() => setShowAdminLogin(false)} 
+        />
       )}
 
       <div className="container mx-auto">
