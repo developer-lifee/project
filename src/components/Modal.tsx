@@ -6,8 +6,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={onClose} // Closes modal when clicking backdrop
+    >
+      <div 
+        className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative"
+        onClick={(e) => e.stopPropagation()}  // Prevents closing when clicking inside content
+      >
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
