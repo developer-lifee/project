@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { saveCustomerData } from '../services/api';
 import RegistrationForm from './RegistrationForm';
 
 const ADMIN_PASSWORD = "admin123";
 const BACKEND_URL = "https://rifa.sheerit.com.co/datos.php";
 const IMAGE_UPLOAD_URL = "https://rifa.sheerit.com.co/upload.php"; // Add your PHP upload endpoint
+const DASHBOARD_API_URL = "https://rifa.sheerit.com.co/admin/dashboard";
 
 // Generate 4 random numbers in "000" format
 const generateRandomNumbers = (): string[] => {
@@ -33,6 +34,13 @@ const AdminPage: React.FC = () => {
     "iphone13promax4.jpg"
   ]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Dashboard data state
+  const [dashboardData, setDashboardData] = useState<{
+    takenNumbers: number;
+    totalNumbers: number;
+    users: Array<{ name: string; email: string; paymentStatus: string }>;
+  } | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +144,23 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  // Fetch dashboard data once logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      const fetchDashboardData = async () => {
+        try {
+          const res = await fetch(DASHBOARD_API_URL);
+          if (!res.ok) throw new Error("Error fetching dashboard data");
+          const data = await res.json();
+          setDashboardData(data);
+        } catch (error) {
+          console.error("Dashboard fetch error:", error);
+        }
+      };
+      fetchDashboardData();
+    }
+  }, [isLoggedIn]);
+
   if (!isLoggedIn) {
     return (
       <div className="max-w-md mx-auto bg-white p-4 rounded shadow my-8">
@@ -165,6 +190,25 @@ const AdminPage: React.FC = () => {
   return (
     <div className="max-w-lg mx-auto bg-white p-6 rounded shadow my-8">
       <h2 className="text-2xl font-bold mb-4 text-center">Panel Administrador</h2>
+      
+      {/* New Dashboard Section */}
+      {dashboardData && (
+        <div className="mb-8 p-4 border rounded-lg bg-gray-50">
+          <h3 className="text-xl font-semibold mb-2">Estadísticas de la Rifa</h3>
+          <p>
+            Números tomados: {dashboardData.takenNumbers} de {dashboardData.totalNumbers} (
+            {((dashboardData.takenNumbers / dashboardData.totalNumbers) * 100).toFixed(1)}%)
+          </p>
+          <h4 className="mt-4 font-semibold">Usuarios y estado de pago:</h4>
+          <ul className="mt-2 list-disc list-inside text-sm">
+            {dashboardData.users.map((user, idx) => (
+              <li key={idx}>
+                {user.name} ({user.email}) - <span className={user.paymentStatus === "pagado" ? "text-green-600" : "text-red-600"}>{user.paymentStatus}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       
       {/* Image Upload Section */}
       <div className="mb-8 p-4 border rounded-lg">
